@@ -208,7 +208,8 @@ where asset.id = any(%s);
 				pass
 
 			except Exception as e :
-				raise
+				print('failed to create stack from:', assets)
+				return
 
 def parseCriterion(tree, asset) :
 	t = tree
@@ -299,7 +300,7 @@ async def stack(conn_str) :
 		parseCriterion(tree, asset)
 
 	stacks = list(getStacks(tree))
-	print('stacks:', stacks)
+	print('stacks:', len(stacks))
 	for i, stack in enumerate(stacks) :
 		await createStack(pool, stack)
 		print(f'created stack {i+1} of {len(stacks)}')
