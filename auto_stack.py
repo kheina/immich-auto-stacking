@@ -294,7 +294,11 @@ async def stack(conn_str) :
 	for asset in assets.values() :
 		parseCriterion(tree, asset)
 
-	print(list(getStacks(tree)))
+	stacks = list(getStacks(tree))
+	print('stacks:', stacks)
+	for i, stack in enumerate(stacks) :
+		await createStack(pool, stack)
+		print(f'created stack {i+1} of {len(stacks)}')
 
 	with open('./.latest', 'w') as file :
 		file.write(str(latest))
