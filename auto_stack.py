@@ -243,7 +243,8 @@ def getStacks(tree, cur=0) :
 		return
 
 	if cur == depth :
-		yield list(tree.values())
+		if len(s := list(tree.values())) > 1 :
+			yield s
 		return
 
 	for t in tree.values() :
