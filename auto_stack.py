@@ -155,7 +155,7 @@ left join asset_metadata
 left join asset_job_status
 	on asset.Id = asset_job_status."assetId"
 		and "metadataExtractedAt" is not null
-where asset."updatedAt" >= 'epoch'::timestamptz
+where asset."updatedAt" > 'epoch'::timestamptz
 	and asset."createdAt" < now() - interval '1 hour'
 	and asset."stackId" is null
 order by asset."updatedAt" asc
@@ -202,7 +202,8 @@ async def stack(conn_str) :
 
 	if os.path.exists('./.latest') :
 		latest = open('./.latest').read().strip()
-		sql = SQL(query.replace('epoch', latest))
+		sql = SQL(query.replace('epoch', latest)) # lazy
+
 	else :
 		sql = SQL(query)
 
