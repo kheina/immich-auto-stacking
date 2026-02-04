@@ -196,7 +196,11 @@ returning id
 set "stackId" = cte.id
 from cte
 where asset.id = any(%s);
-					"""), assets[0]['asset.id'], assets[0]['asset.ownerId'], [a['asset.id'] for a in assets])
+					"""), [
+						assets[0]['asset.id'],
+						assets[0]['asset.ownerId'],
+						[a['asset.id'] for a in assets],
+					])
 					await conn.commit()
 					return
 
