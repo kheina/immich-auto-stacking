@@ -189,7 +189,11 @@ def parseCriterion(assets) :
 			if c not in headers :
 				continue
 
-			m = r.match(a[c])
+			for rx in r :
+				m = rx.match(a[c])
+				if m :
+					break
+
 			if not m :
 				continue
 
@@ -247,7 +251,7 @@ async def stack(conn_str) :
 		i['asset_metadata'] = metadata[i['asset.id']]
 		assets[i['asset.id']] = i
 
-	criteria = criteria()
+	parseCriterion(assets)
 
 
 if __name__ == '__main__' :
