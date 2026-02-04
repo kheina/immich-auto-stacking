@@ -221,6 +221,7 @@ async def stack(conn_str) :
 			except Exception as e :
 				raise
 
+	latest = max(a['asset.updatedAt'] for a in res)
 	metadata = defaultdict(dict)
 	for i in res :
 		if not all([i.get('asset.id'), i.get('asset_metadata.key'), i.get('asset_metadata.value')]) :
@@ -244,7 +245,11 @@ async def stack(conn_str) :
 	tree = { }
 	for asset in assets.values() :
 		parseCriterion(tree, asset)
+
 	print(tree)
+
+	with open('./.latest', 'w') as file :
+		file.write(str(latest))
 
 
 if __name__ == '__main__' :
