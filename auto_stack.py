@@ -1,7 +1,11 @@
 import asyncio
 import os
+import re
 from collections import defaultdict
+from functools import lru_cache
+from uuid import uuid4
 
+import yaml
 from psycopg import AsyncClientCursor, AsyncConnection, AsyncCursor, Binary, OperationalError
 from psycopg.sql import SQL
 from psycopg_pool import AsyncConnectionPool
@@ -158,6 +162,48 @@ order by asset."updatedAt" asc
 limit 1000;
 """
 
+@lru_cache
+def criteria() :
+	yml = yaml.safe_load(open('./criteria.yml'))
+	cri = defaultdict(list)
+	for k, v in yml.items() :
+		cri[k] = list(map(re.compile, v))
+	return cri
+
+def createStack(assets) :
+	pass
+
+def allMatch(m1, m2) :
+	# returns true if all members of an enumerable equal all members of another
+	return all(map(lambda x: x[0] == x[1], zip(m1, m2)))
+
+def parseCriterion(assets) :
+	# so this will basically be a big ass tree of hash(capturing group) such
+	# that every single capturing group will be a key until all regexes have
+	# been exec'd and the final member will be a list of asset ids
+	tree = { }
+	for a in assets :
+		t = tree
+		for c, r in criteria().items() :
+			# TODO: add asset_metadata parsing
+			if c not in headers :
+				continue
+
+			m = r.match(a[c])
+			if not m :
+				continue
+
+			for g in m.groups() :
+				h = hash(g)
+				if h not in t :
+					t[h] = { }
+
+				t = t[h]
+
+		t[a['asset.id']] = a
+
+	print(tree)
+
 
 async def stack(conn_str) :
 	pool = AsyncConnectionPool(conn_str, open=False)
@@ -201,7 +247,7 @@ async def stack(conn_str) :
 		i['asset_metadata'] = metadata[i['asset.id']]
 		assets[i['asset.id']] = i
 
-	print(assets)
+	criteria = criteria()
 
 
 if __name__ == '__main__' :

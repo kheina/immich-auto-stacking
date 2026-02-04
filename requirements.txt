@@ -1,1 +1,2 @@
 psycopg[binary,pool]>=3.2.12
+pyyaml>=6.0.3

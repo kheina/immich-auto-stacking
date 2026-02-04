@@ -1,0 +1,5 @@
+asset.ownerId:
+  - (.+)
+asset.originalFileName:
+  - (.+).RAW-\d+.COVER.jpg
+  - (.+).RAW-\d+.ORIGINAL.dng
