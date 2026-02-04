@@ -182,7 +182,7 @@ def parseCriterion(assets) :
 	# that every single capturing group will be a key until all regexes have
 	# been exec'd and the final member will be a list of asset ids
 	tree = { }
-	for a in assets :
+	for aid, a in assets.items() :
 		t = tree
 		for c, r in criteria().items() :
 			# TODO: add asset_metadata parsing
@@ -190,7 +190,7 @@ def parseCriterion(assets) :
 				continue
 
 			for rx in r :
-				m = rx.match(a[c])
+				m = rx.match(str(a[c]))
 				if m :
 					break
 
