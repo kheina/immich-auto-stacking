@@ -181,8 +181,7 @@ def criteria() :
 
 async def createStack(pool, assets) :
 	if len(assets) <= 1 :
-		print('cannot create stack of 1 asset:', assets)
-		return
+		return 'cannot create stack of 1 asset'
 
 	for _ in range(3) :
 		async with pool.connection() as conn :
@@ -211,8 +210,7 @@ where asset.id = any(%s);
 				pass
 
 			except Exception as e :
-				print('failed to create stack from:', assets)
-				return
+				return e
 
 def parseCriterion(tree, asset) :
 	t = tree
@@ -306,8 +304,12 @@ async def stack(conn_str) :
 	stacks = list(getStacks(tree))
 	print('stacks:', len(stacks))
 	for i, stack in enumerate(stacks) :
-		await createStack(pool, stack)
-		print(f'created stack {i+1} of {len(stacks)} {list(map(str(a["asset.id"] for a in stack)))}')
+		print(f'creating stack {i+1} of {len(stacks)}')
+		if e := await createStack(pool, stack) :
+			print('failed to create stack:', e)
+
+		else :
+		print(f' -> created stack of {list(map(str(a["asset.id"] for a in stack)))}')
 
 	with open('./.latest', 'w') as file :
 		file.write(str(latest))
