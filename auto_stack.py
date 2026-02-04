@@ -180,7 +180,10 @@ def criteria() :
 	return cri
 
 async def createStack(pool, assets) :
-	assert len(assets) > 1, 'cannot create stack of 1 asset'
+	if len(assets) <= 1 :
+		print('cannot create stack of 1 asset:', assets)
+		return
+
 	for _ in range(3) :
 		async with pool.connection() as conn :
 			try :
