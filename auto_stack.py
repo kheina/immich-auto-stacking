@@ -309,7 +309,7 @@ async def stack(conn_str) :
 			print('failed to create stack:', e)
 
 		else :
-		print(f' -> created stack of {list(map(str(a["asset.id"] for a in stack)))}')
+			print(f' -> created stack of {list(map(str(a["asset.id"] for a in stack)))}')
 
 	with open('./.latest', 'w') as file :
 		file.write(str(latest))
