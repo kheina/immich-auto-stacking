@@ -160,7 +160,7 @@ limit 1000;
 
 async def stack(conn_str) :
 	pool = AsyncConnectionPool(conn_str, open=False)
-	await pool.open()
+	await pool.open(wait=True, timeout=5)
 
 	if os.path.exists('./.latest') :
 		latest = open('./.latest').read().strip()
@@ -168,7 +168,7 @@ async def stack(conn_str) :
 	else :
 		sql = SQL(query)
 
-	for _ in range(attempts) :
+	for _ in range(3) :
 		async with pool.connection() as conn :
 			try :
 				async with AsyncClientCursor(conn) as cur :
@@ -199,10 +199,10 @@ async def stack(conn_str) :
 		i['asset_metadata'] = metadata[i['id']]
 		assets[i['id']] = i
 
+	print(assets)
 
 
-
-if __name__ == 'main' :
+if __name__ == '__main__' :
 	db_user = os.environ.get('DB_USERNAME')
 	db_pass = os.environ.get('DB_PASSWORD')
 	db_name = os.environ.get('DB_DATABASE_NAME')
