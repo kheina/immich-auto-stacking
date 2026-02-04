@@ -1,0 +1,29 @@
+!**/.gitignore
+
+# credentials
+**/credentials*.*
+**/credentials*
+credentials*
+
+# config files
+.vscode
+
+# docker volumes
+docker/**
+
+# database files
+sql.lock
+
+# images
+**/*.jpg
+**/*.png
+**/*.gif
+**/*.ico
+**/*.svg
+images
+
+# python files
+**/__pycache__
+**/Pipfile
+.pytest_cache
+.venv

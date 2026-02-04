@@ -1,5 +1,6 @@
 import asyncio
 import os
+from collections import defaultdict
 
 from psycopg import AsyncClientCursor, AsyncConnection, AsyncCursor, Binary, OperationalError
 from psycopg.sql import SQL
@@ -172,7 +173,7 @@ async def stack(conn_str) :
 		async with pool.connection() as conn :
 			try :
 				async with AsyncClientCursor(conn) as cur :
-					await cur.execute(sql, params)
+					await cur.execute(sql)
 					res = list(map(lambda x : dict(zip(headers, x)), await cur.fetchall()))
 					break
 
