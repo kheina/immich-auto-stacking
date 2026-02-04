@@ -174,7 +174,8 @@ async def stack(conn_str) :
 			try :
 				async with AsyncClientCursor(conn) as cur :
 					await cur.execute(sql)
-					res = list(map(lambda x : dict(zip(headers, x)), await cur.fetchall()))
+					got = await cur.fetchall()
+					res = list(map(lambda x : dict(zip(headers, x)), got))
 					break
 
 			except OperationalError :
@@ -183,9 +184,10 @@ async def stack(conn_str) :
 			except Exception as e :
 				raise
 
+	print('items:', len(got), f'({len(res)})')
 	metadata = defaultdict(dict)
 	for i in res :
-		if not all(i.get('id'), i.get('asset_metadata.key'), i.get('asset_metadata.value')) :
+		if not all([i.get('id'), i.get('asset_metadata.key'), i.get('asset_metadata.value')]) :
 			continue
 		metadata[i['id']][i['asset_metadata.key']] = i['asset_metadata.value']
 		del i['asset_metadata.key']
