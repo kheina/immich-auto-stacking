@@ -307,7 +307,7 @@ async def stack(conn_str) :
 	print('stacks:', len(stacks))
 	for i, stack in enumerate(stacks) :
 		await createStack(pool, stack)
-		print(f'created stack {i+1} of {len(stacks)}')
+		print(f'created stack {i+1} of {len(stacks)} {list(map(str(a["asset.id"] for a in stack)))}')
 
 	with open('./.latest', 'w') as file :
 		file.write(str(latest))
