@@ -229,8 +229,11 @@ def parseCriterion(tree, asset) :
 			t = t[h]
 	t[asset['asset.id']] = asset
 
-def getStacks(tree, cur=1) :
+def getStacks(tree, cur=0) :
 	global depth
+	if not tree :
+		return
+
 	if cur == depth :
 		yield list(tree.values())
 		return
@@ -291,7 +294,7 @@ async def stack(conn_str) :
 	for asset in assets.values() :
 		parseCriterion(tree, asset)
 
-	print(getStacks)
+	print(list(getStacks(tree)))
 
 	with open('./.latest', 'w') as file :
 		file.write(str(latest))
