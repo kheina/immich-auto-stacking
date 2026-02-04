@@ -181,7 +181,7 @@ def parseCriterion(tree, asset) :
 			return
 
 		for rx in r :
-			m = rx.match(str(a[c]))
+			m = rx.match(str(asset[c]))
 			if m :
 				break
 
@@ -194,7 +194,7 @@ def parseCriterion(tree, asset) :
 				t[h] = { }
 
 			t = t[h]
-	t[asset['asset.id']] = a
+	t[asset['asset.id']] = 0
 
 async def stack(conn_str) :
 	pool = AsyncConnectionPool(conn_str, open=False)
