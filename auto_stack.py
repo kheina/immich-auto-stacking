@@ -162,16 +162,49 @@ order by asset."updatedAt" asc
 limit 1000;
 """
 
+depth = 0
 @lru_cache
 def criteria() :
+	global depth
 	yml = yaml.safe_load(open('./criteria.yml'))
 	cri = defaultdict(list)
 	for k, v in yml.items() :
-		cri[k] = list(map(re.compile, v))
+		cri[k] = []
+		d = set()
+		for s in v :
+			rx = re.compile(s)
+			cri[k].append(rx)
+			d.add(rx.groups)
+		assert len(d) == 1, 'the number of capturing groups must be the same among all expressions within a given datapoint'
+		depth += d.pop()
 	return cri
 
-def createStack(assets) :
-	pass
+async def createStack(pool, assets) :
+	assert len(assets) > 1, 'cannot create stack of 1 asset'
+	for _ in range(3) :
+		async with pool.connection() as conn :
+			try :
+				async with AsyncClientCursor(conn) as cur :
+					await cur.execute(SQL("""
+with cte as (
+insert into stack
+("primaryAssetId", "ownerId")
+values
+(%s, %s)
+returning id
+) update asset
+set "stackId" = cte.id
+from cte
+where asset.id = any(%s);
+					"""), assets[0]['asset.id'], assets[0]['asset.ownerId'], [a['asset.id'] for a in assets])
+					await conn.commit()
+					return
+
+			except OperationalError :
+				pass
+
+			except Exception as e :
+				raise
 
 def parseCriterion(tree, asset) :
 	t = tree
@@ -194,7 +227,16 @@ def parseCriterion(tree, asset) :
 				t[h] = { }
 
 			t = t[h]
-	t[asset['asset.id']] = 0
+	t[asset['asset.id']] = asset
+
+def getStacks(tree, cur=1) :
+	global depth
+	if cur == depth :
+		yield list(tree.values())
+		return
+
+	for t in tree.values() :
+		yield from getStacks(t, cur+1)
 
 async def stack(conn_str) :
 	pool = AsyncConnectionPool(conn_str, open=False)
@@ -249,7 +291,7 @@ async def stack(conn_str) :
 	for asset in assets.values() :
 		parseCriterion(tree, asset)
 
-	print(tree)
+	print(getStacks)
 
 	with open('./.latest', 'w') as file :
 		file.write(str(latest))

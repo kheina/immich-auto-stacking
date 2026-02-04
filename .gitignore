@@ -12,7 +12,7 @@ credentials*
 docker/**
 
 # database files
-sql.lock
+.latest
 
 # images
 **/*.jpg

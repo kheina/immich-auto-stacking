@@ -1,4 +1,5 @@
 asset.ownerId:
+  # don't remove this line unless you want (potentially) different users to have their photos stacked together
   - (.+)
 asset.originalFileName:
   - (.+).RAW-\d+.COVER.jpg
