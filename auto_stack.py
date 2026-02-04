@@ -173,41 +173,28 @@ def criteria() :
 def createStack(assets) :
 	pass
 
-def allMatch(m1, m2) :
-	# returns true if all members of an enumerable equal all members of another
-	return all(map(lambda x: x[0] == x[1], zip(m1, m2)))
+def parseCriterion(tree, asset) :
+	t = tree
+	for c, r in criteria().items() :
+		# TODO: add asset_metadata parsing
+		if c not in headers :
+			return
 
-def parseCriterion(assets) :
-	# so this will basically be a big ass tree of hash(capturing group) such
-	# that every single capturing group will be a key until all regexes have
-	# been exec'd and the final member will be a list of asset ids
-	tree = { }
-	for aid, a in assets.items() :
-		t = tree
-		for c, r in criteria().items() :
-			# TODO: add asset_metadata parsing
-			if c not in headers :
-				continue
+		for rx in r :
+			m = rx.match(str(a[c]))
+			if m :
+				break
 
-			for rx in r :
-				m = rx.match(str(a[c]))
-				if m :
-					break
+		if not m :
+			return
 
-			if not m :
-				continue
+		for g in m.groups() :
+			h = hash(g)
+			if h not in t :
+				t[h] = { }
 
-			for g in m.groups() :
-				h = hash(g)
-				if h not in t :
-					t[h] = { }
-
-				t = t[h]
-
-		t[a['asset.id']] = a
-
-	print(tree)
-
+			t = t[h]
+	t[asset['asset.id']] = a
 
 async def stack(conn_str) :
 	pool = AsyncConnectionPool(conn_str, open=False)
@@ -251,7 +238,13 @@ async def stack(conn_str) :
 		i['asset_metadata'] = metadata[i['asset.id']]
 		assets[i['asset.id']] = i
 
-	parseCriterion(assets)
+	# so this will basically be a big ass tree of hash(capturing group) such
+	# that every single capturing group will be a key until all regexes have
+	# been exec'd and the final member will be a list of asset ids
+	tree = { }
+	for asset in assets.values() :
+		parseCriterion(tree, asset)
+	print(tree)
 
 
 if __name__ == '__main__' :
