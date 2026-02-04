@@ -212,8 +212,7 @@ async def stack(conn_str) :
 			try :
 				async with AsyncClientCursor(conn) as cur :
 					await cur.execute(sql)
-					got = await cur.fetchall()
-					res = list(map(lambda x : dict(zip(headers, x)), got))
+					res = list(map(lambda x : dict(zip(headers, x)), await cur.fetchall()))
 					break
 
 			except OperationalError :
@@ -221,6 +220,9 @@ async def stack(conn_str) :
 
 			except Exception as e :
 				raise
+
+	if not res :
+		return
 
 	latest = max(a['asset.updatedAt'] for a in res)
 	metadata = defaultdict(dict)
