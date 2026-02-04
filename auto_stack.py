@@ -184,12 +184,11 @@ async def stack(conn_str) :
 			except Exception as e :
 				raise
 
-	print('items:', len(got), f'({len(res)})')
 	metadata = defaultdict(dict)
 	for i in res :
-		if not all([i.get('id'), i.get('asset_metadata.key'), i.get('asset_metadata.value')]) :
+		if not all([i.get('asset.id'), i.get('asset_metadata.key'), i.get('asset_metadata.value')]) :
 			continue
-		metadata[i['id']][i['asset_metadata.key']] = i['asset_metadata.value']
+		metadata[i['asset.id']][i['asset_metadata.key']] = i['asset_metadata.value']
 		del i['asset_metadata.key']
 		del i['asset_metadata.value']
 		del i['asset_metadata.updateId']
@@ -197,10 +196,10 @@ async def stack(conn_str) :
 
 	assets = { }
 	for i in res :
-		if not i.get('id') :
+		if not i.get('asset.id') :
 			continue
-		i['asset_metadata'] = metadata[i['id']]
-		assets[i['id']] = i
+		i['asset_metadata'] = metadata[i['asset.id']]
+		assets[i['asset.id']] = i
 
 	print(assets)
 
