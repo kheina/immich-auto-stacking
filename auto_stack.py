@@ -1,6 +1,8 @@
 import asyncio
 import os
 import re
+import datetime
+from dateutil import parser
 from collections import defaultdict
 from functools import lru_cache
 from uuid import uuid4
@@ -253,7 +255,7 @@ async def stack(conn_str) :
 	await pool.open(wait=True, timeout=5)
 
 	if os.path.exists('./.latest') :
-		latest = open('./.latest').read().strip()
+		latest = str(min([datetime.datetime.now(datetime.UTC) - datetime.timedelta(hours=1), parser.parse(open('./.latest').read().strip())]))
 		sql = SQL(query.replace('epoch', latest)) # lazy
 
 	else :
@@ -274,8 +276,10 @@ async def stack(conn_str) :
 				raise
 
 	if not res :
+		print('found no new records to stack')
 		return
 
+	print('found', len(res), 'results')
 	latest = max(a['asset.updatedAt'] for a in res)
 	metadata = defaultdict(dict)
 	for i in res :
@@ -287,6 +291,7 @@ async def stack(conn_str) :
 		del i['asset_metadata.updateId']
 		del i['asset_metadata.updatedAt']
 
+	# assets must be a dict so that it ensures unique assets after populating metadata
 	assets = { }
 	for i in res :
 		if not i.get('asset.id') :
@@ -294,6 +299,7 @@ async def stack(conn_str) :
 		i['asset_metadata'] = metadata[i['asset.id']]
 		assets[i['asset.id']] = i
 
+	print('found', len(assets), 'unique assets')
 	# so this will basically be a big ass tree of hash(capturing group) such
 	# that every single capturing group will be a key until all regexes have
 	# been exec'd and the final member will be a list of asset ids
@@ -302,14 +308,14 @@ async def stack(conn_str) :
 		parseCriterion(tree, asset)
 
 	stacks = list(getStacks(tree))
-	print('stacks:', len(stacks))
+	print('found', len(stacks), 'new stacks')
 	for i, stack in enumerate(stacks) :
 		print(f'creating stack {i+1} of {len(stacks)}')
 		if e := await createStack(pool, stack) :
 			print('failed to create stack:', e)
 
 		else :
-			print(f' -> created stack of {list(map(str(a["asset.id"] for a in stack)))}')
+			print(f' -> created stack from {list(map(str, (a["asset.id"] for a in stack)))}')
 
 	with open('./.latest', 'w') as file :
 		file.write(str(latest))

@@ -1,6 +1,9 @@
 asset.ownerId:
-  # don't remove this line unless you want (potentially) different users to have their photos stacked together
-  - (.+)
+  # don't remove this line unless you want (potentially) different users to have their
+  # photos stacked together. this is a super basic regex that just captures the entire
+  # string, no matter the contents. this way, the entire ownerId must be the same in order
+  # for photos to be stacked together. feel free to use this regex elsewhere.
+  - ([\s\S]*)
 asset.originalFileName:
   - (.+).RAW-\d+.COVER.jpg
   - (.+).RAW-\d+.ORIGINAL.dng
