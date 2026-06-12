@@ -1,7 +1,9 @@
+import argparse
 import asyncio
+import datetime
 import os
 import re
-import datetime
+import sys
 from dateutil import parser
 from collections import defaultdict
 from functools import lru_cache
@@ -185,6 +187,8 @@ async def createStack(pool, assets) :
 	if len(assets) <= 1 :
 		return 'cannot create stack of 1 asset'
 
+	# TODO: only CREATE stack when there is none.
+	# TODO: otherwise, just add new thing to stack
 	for _ in range(3) :
 		async with pool.connection() as conn :
 			try :
@@ -256,6 +260,7 @@ async def stack(conn_str) :
 
 	if os.path.exists('./.latest') :
 		latest = str(min([datetime.datetime.now(datetime.UTC) - datetime.timedelta(hours=1), parser.parse(open('./.latest').read().strip())]))
+		print(f'parsed latest: {latest}')
 		sql = SQL(query.replace('epoch', latest)) # lazy
 
 	else :
@@ -317,13 +322,60 @@ async def stack(conn_str) :
 		else :
 			print(f' -> created stack from {list(map(str, (a["asset.id"] for a in stack)))}')
 
+	# TODO: update latest to min(latest, now - 1 hour)
 	with open('./.latest', 'w') as file :
 		file.write(str(latest))
-
+		print(f'updated latest to {latest}')
 
 if __name__ == '__main__' :
-	db_user = os.environ.get('DB_USERNAME')
-	db_pass = os.environ.get('DB_PASSWORD')
-	db_name = os.environ.get('DB_DATABASE_NAME')
-	db_port = os.environ.get('DB_PORT', '5432')
-	asyncio.run(stack(f'user={db_user} password={db_pass} dbname={db_name} host=127.0.0.1 port={db_port}'))
+	ap = app = argparse.ArgumentParser(formatter_class=argparse.HelpFormatter, description="")
+	ap.add_argument("-U", metavar="USER", help="username for postgres (can be passed via DB_USERNAME env)")
+	ap.add_argument("-a", metavar="PASS", default="", help="password (or $filepath) for postgres (can be passed via DB_PASSWORD env)")
+	ap.add_argument("-p", metavar="PORT", default="", help="port number used by the postgres host (can be passed via DB_PORT env)")
+	ap.add_argument("-d", metavar="NAME", default="", help="database name used for immich (can be passed via DB_DATABASE_NAME env)")
+	ap.add_argument("-H", metavar="HOST", default="", help="database host ip (can be passed via DB_HOST env)")
+	ap.add_argument("-c", metavar="PATH", default="", help="config file that can contain any of the above env vars in KEY=VALUE format")
+	ap.add_argument("-wd", metavar="PATH", default=os.path.dirname(__file__), help="filepath to use as the auto stacker's working directory")
+	ar = app.parse_args(args=sys.argv[1:])
+	os.chdir(ar.wd)
+
+	if ar.c and os.path.isfile(ar.c):
+		with open(ar.c, "r") as f:
+			lines = f.readlines()
+		for ln in lines:
+			ln = ln.split("#")[0].strip()
+			m = re.match(r'\s*(DB_USERNAME|DB_PASSWORD|DB_PORT|DB_DATABASE_NAME|DB_HOST)\s*=\s*(.+)', ln)
+			if not m:
+				continue
+			if m.group(1) == 'DB_USERNAME':
+				ar.U = m.group(2)
+				print(f'set DB_USERNAME = {ar.U}')
+			if m.group(1) == 'DB_PASSWORD':
+				ar.a = m.group(2)
+				print(f'set DB_PASSWORD = ({len(ar.a)})')
+			if m.group(1) == 'DB_PORT':
+				ar.p = m.group(2)
+				print(f'set DB_PORT = {ar.p}')
+			if m.group(1) == 'DB_DATABASE_NAME':
+				ar.d = m.group(2)
+				print(f'set DB_DATABASE_NAME = {ar.d}')
+			if m.group(1) == 'DB_HOST':
+				ar.H = m.group(2)
+				print(f'set DB_HOST = {ar.H}')
+	if not ar.U:
+		ar.U = os.environ.get('DB_USERNAME', 'postgres')
+		print(f'read DB_USERNAME = {ar.U}')
+	if not ar.a:
+		ar.a = os.environ.get('DB_PASSWORD')
+		print(f'read DB_PASSWORD = ({len(ar.a)})')
+	if not ar.p:
+		ar.p = os.environ.get('DB_PORT', '5432')
+		print(f'read DB_PORT = {ar.p}')
+	if not ar.d:
+		ar.d = os.environ.get('DB_DATABASE_NAME')
+		print(f'read DB_DATABASE_NAME = {ar.d}')
+	if not ar.H:
+		ar.H = os.environ.get('DB_HOST', '127.0.0.1')
+		print(f'read DB_HOST = {ar.H}')
+
+	asyncio.run(stack(f'user={ar.U} password={ar.a} dbname={ar.d} host={ar.H} port={ar.p}'))
